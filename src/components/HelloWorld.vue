@@ -10,7 +10,7 @@
         >{{ p }}</b-nav-item>
       </b-nav>
       <div v-for="p of players" :key="p" v-show="player === p" class="my-2">
-        <label for="num-ratio" class="mx-2">Ratio:</label>
+        <label for="num-ratio" class="mx-2">ハンデ：</label>
         <b-form-spinbutton id="num-ratio" v-model="ratio[p]" min="-10" max="10" inline></b-form-spinbutton>
       </div>
       <button class="btn btn-primary" type="button" v-on:click="start()">スタート</button>
@@ -55,6 +55,29 @@ const _diceBaroque = ratio => {
   const max = Math.max(...Object.values(result));
   return parseInt(Object.keys(result).find(key => result[key] === max));
 };
+
+const _rate1 = a => {
+  return (
+    1 /
+    (6 * (1 + 5 * a) * (1 + 4 * a) * (1 + 3 * a) * (1 + 2 * a) * (1 + 1 * a))
+  );
+};
+const _rate6 = a => {
+  return (
+    (1 / (6 * (1 + 4 * a) * (1 + 3 * a) * (1 + 2 * a) * (1 + 1 * a)) +
+      ((1 + 1 * a) ** 5 - 1) /
+        (5 * (1 + 4 * a) * (1 + 3 * a) * (1 + 2 * a) * (1 + 1 * a)) +
+      ((1 + 2 * a) ** 4 - (1 + 1 * a) ** 4) /
+        (4 * (1 + 4 * a) * (1 + 3 * a) * (1 + 2 * a)) +
+      ((1 + 3 * a) ** 3 - (1 + 2 * a) ** 3) / (3 * (1 + 4 * a) * (1 + 3 * a)) +
+      ((1 + 4 * a) ** 2 - (1 + 3 * a) ** 2) / (2 * (1 + 4 * a)) +
+      a) /
+    (1 + 5 * a)
+  );
+};
+for (let a of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+  console.log(0.01 * a, { 1: _rate1(0.01 * a), 6: _rate6(0.01 * a) });
+}
 
 let interval = null;
 const drumroll = new Audio(require("../assets/drumroll.mp3"));
