@@ -4,16 +4,22 @@
       <b-nav class="nav-tabs justify-content-center">
         <b-nav-item
           v-for="p of players"
-          :key="p"
+          :key="p.name"
           v-bind:active="player === p"
+          v-bind:class="{
+            'name-active':player === p,
+            'name-enabled': !p.enabled}"
           v-on:click="player = p"
-        >{{ p }}</b-nav-item>
+          v-long-press="1000"
+          @long-press-start="onLongPressStart"
+          @long-press-stop="onLongPressStop"
+        >{{ p.name }}</b-nav-item>
       </b-nav>
-      <div v-for="p of players" :key="p" v-show="player === p" class="my-2">
+      <div v-for="p of players" :key="p.name" v-show="player === p" class="my-5">
         <label for="num-ratio" class="mx-2">ハンデ：</label>
-        <b-form-spinbutton id="num-ratio" v-model="ratio[p]" min="-10" max="10" inline></b-form-spinbutton>
+        <b-form-spinbutton id="num-ratio" v-model="p.ratio" min="-10" max="10" inline></b-form-spinbutton>
       </div>
-      <button class="btn btn-primary" type="button" v-on:click="start()">スタート</button>
+      <button class="btn btn-primary my-5" type="button" v-on:click="start()">スタート</button>
     </b-container>
     <div class="container mt-4">
       <p
@@ -26,6 +32,8 @@
 </template>
 
 <script>
+import LongPress from "vue-directive-long-press";
+
 import AssetsImageKoura from "../assets/koura.png";
 import AssetsImageCoin from "../assets/coin.png";
 import AssetsImageKinoko from "../assets/kinoko.png";
@@ -43,7 +51,7 @@ const assetsImages = {
 
 const _diceBaroque = ratio => {
   ratio = ratio || 0;
-  console.log(ratio);
+  //console.log(ratio);
   const result = {};
   for (let i of [1, 2, 3, 4, 5, 6]) {
     if (ratio >= 0) {
@@ -81,19 +89,21 @@ for (let a of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
 
 let interval = null;
 const drumroll = new Audio(require("../assets/drumroll.mp3"));
-const players = ["はやと", "さき", "パパ", "ママ"];
+const playersData = [
+  { name: "はやと", color: "#ddffff" },
+  { name: "さき", color: "#ffddff" },
+  { name: "パパ", color: "#ddffdd" },
+  { name: "ママ", color: "#ffdddd" }
+];
+const players = playersData.map(data => ({ ...data, ratio: 0, enabled: true }));
 
 export default {
   name: "HelloWorld",
   props: {},
   data: function() {
     return {
-      players: players,
+      players,
       player: players[0],
-      ratio: players.reduce((a, b) => {
-        a[b] = 0;
-        return a;
-      }, {}),
       assetsImage: AssetsImageKoura,
       number: 1,
       animation: false
@@ -102,6 +112,9 @@ export default {
   watch: {
     number: function() {
       this.assetsImage = assetsImages[this.number];
+    },
+    player: function() {
+      this.$emit("setBackgroundColor", this.player.color || "#ffffff");
     }
   },
   methods: {
@@ -114,25 +127,33 @@ export default {
       this.animation = false;
       const startTime = Date.now();
       interval = setInterval(() => {
-        this.number = _diceBaroque(this.ratio[this.player]);
+        console.log(this.player.ratio);
+        this.number = _diceBaroque(this.player.ratio);
         //console.log(this.number);
         if (Date.now() - startTime > 3000) {
           clearInterval(interval);
           this.animation = true;
+          this.player = this.players[
+            (this.players.indexOf(this.player) + 1) % this.players.length
+          ];
         }
       }, 10);
+    },
+    onLongPressStart() {
+      console.log("onLongPressStart()");
+    },
+    onLongPressStop() {
+      console.log("onLongPressStop()");
     }
+  },
+  directives: {
+    "long-press": LongPress
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.h1 {
-  font-size: 5rem;
-  font-weight: 600;
-}
-
 .dice-number {
   animation: dice-number-scaling 0.5s ease 0s 1 normal;
   -webkit-animation: dice-number-scaling 0.5s ease 0s 1 normal;
@@ -144,6 +165,14 @@ export default {
   background-repeat: no-repeat;
   background-color: rgba(255, 255, 255, 0.8);
   background-blend-mode: lighten;
+}
+
+.name-active {
+  font-weight: 600;
+}
+
+.name-enabled {
+  background-color: #999999;
 }
 
 @keyframes dice-number-scaling {

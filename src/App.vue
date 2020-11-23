@@ -1,6 +1,6 @@
 <template>
-  <div id="app">
-    <HelloWorld />
+  <div id="app" :style="{ backgroundColor: backgroundColor}">
+    <HelloWorld @setBackgroundColor="setBackgroundColor" />
   </div>
 </template>
 
@@ -11,6 +11,16 @@ export default {
   name: "App",
   components: {
     HelloWorld
+  },
+  data: function() {
+    return {
+      backgroundColor: "#ffffff"
+    };
+  },
+  methods: {
+    setBackgroundColor(code) {
+      this.backgroundColor = code;
+    }
   }
 };
 </script>
@@ -22,6 +32,10 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  padding-top: 60px;
+  height: 100%;
 }
+
+html, body { height: 100%; }
+
 </style>
